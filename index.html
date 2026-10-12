@@ -4,10 +4,222 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cadastro de Voluntários</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+    .hidden { display: none !important; }
+
+    /* ===== Formulário ===== */
+    .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .form-container { width: 100%; max-width: 440px; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      width: 100%;
+    }
+    .card h1 { font-size: 1.6rem; margin-bottom: 6px; color: #1a365d; }
+    .subtitle { color: #718096; margin-bottom: 28px; font-size: 0.95rem; }
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #2d3748;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(49,130,206,0.15);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-primary {
+      background: #3182ce;
+      color: white;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .btn-primary:hover { background: #2b6cb0; }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #2d3748;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+    }
+    .btn-secondary:hover { background: #cbd5e0; }
+    .btn-whatsapp {
+      background: #25d366;
+      color: white;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-whatsapp:hover { background: #1da851; }
+    .mensagem {
+      margin-top: 20px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+    .mensagem.sucesso { background: #c6f6d5; color: #22543d; }
+    .mensagem.erro { background: #fed7d7; color: #742a2a; }
+    .footer-link {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+    .footer-link a { color: #3182ce; text-decoration: none; cursor: pointer; }
+    .footer-link a:hover { text-decoration: underline; }
+
+    /* ===== Painel Admin ===== */
+    .admin-header {
+      background: #1a365d;
+      color: white;
+      padding: 16px 24px;
+    }
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-content h1 { font-size: 1.3rem; }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    #total-voluntarios { font-size: 0.95rem; opacity: 0.9; }
+    .admin-layout {
+      display: flex;
+      height: calc(100vh - 64px);
+    }
+    .lista-panel {
+      width: 380px;
+      min-width: 320px;
+      background: white;
+      border-right: 1px solid #e2e8f0;
+      display: flex;
+      flex-direction: column;
+    }
+    .lista-header {
+      padding: 16px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .lista-header h2 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #1a365d;
+    }
+    .busca-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+    .busca-input:focus {
+      outline: none;
+      border-color: #3182ce;
+    }
+    .lista-voluntarios {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .voluntario-item {
+      padding: 14px;
+      border-radius: 10px;
+      margin-bottom: 6px;
+      background: #f7fafc;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .voluntario-item:hover {
+      background: #edf2f7;
+      border-color: #e2e8f0;
+    }
+    .voluntario-item.ativo {
+      background: #ebf8ff;
+      border-color: #3182ce;
+    }
+    .voluntario-nome {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+    .voluntario-info {
+      font-size: 0.82rem;
+      color: #718096;
+      margin-bottom: 2px;
+    }
+    .voluntario-acoes { margin-top: 8px; }
+    .mapa-panel { flex: 1; position: relative; }
+    #mapa { width: 100%; height: 100%; }
+    .lista-vazia {
+      text-align: center;
+      padding: 40px 20px;
+      color: #a0aec0;
+    }
+
+    @media (max-width: 768px) {
+      .admin-layout { flex-direction: column; height: auto; }
+      .lista-panel { width: 100%; max-height: 40vh; }
+      .mapa-panel { height: 60vh; }
+      .header-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="container form-container">
+
+  <!-- ========== TELA: Formulário do Voluntário ========== -->
+  <div id="tela-formulario" class="container form-container">
     <div class="card">
       <h1>Cadastro de Voluntário</h1>
       <p class="subtitle">Preencha seus dados para participar dos núcleos</p>
@@ -17,30 +229,324 @@
           <label for="nome">Nome completo *</label>
           <input type="text" id="nome" name="nome" required placeholder="Seu nome completo">
         </div>
-
         <div class="form-group">
           <label for="whatsapp">WhatsApp *</label>
           <input type="tel" id="whatsapp" name="whatsapp" required placeholder="(11) 99999-9999" maxlength="15">
         </div>
-
         <div class="form-group">
           <label for="endereco">Endereço completo *</label>
           <input type="text" id="endereco" name="endereco" required placeholder="Rua, número, bairro, cidade - UF">
         </div>
-
-        <button type="submit" class="btn btn-primary" id="btn-enviar">
-          Enviar cadastro
-        </button>
+        <button type="submit" class="btn btn-primary" id="btn-enviar">Enviar cadastro</button>
       </form>
 
       <div id="mensagem" class="mensagem hidden"></div>
     </div>
-
     <p class="footer-link">
-      <a href="admin.html">Área da Gestão</a>
+      <a id="link-gestao">Área da Gestão</a>
     </p>
   </div>
 
-  <script src="app.js"></script>
+  <!-- ========== TELA: Login da Gestão ========== -->
+  <div id="tela-login" class="container form-container hidden">
+    <div class="card">
+      <h1>Área da Gestão</h1>
+      <p class="subtitle">Acesso restrito</p>
+      <form id="form-login">
+        <div class="form-group">
+          <label for="senha">Senha</label>
+          <input type="password" id="senha" name="senha" required placeholder="Digite a senha">
+        </div>
+        <button type="submit" class="btn btn-primary">Entrar</button>
+      </form>
+      <div id="login-erro" class="mensagem erro hidden"></div>
+      <p class="footer-link"><a id="link-voltar-form">← Voltar ao cadastro</a></p>
+    </div>
+  </div>
+
+  <!-- ========== TELA: Painel da Gestão ========== -->
+  <div id="tela-painel" class="hidden">
+    <header class="admin-header">
+      <div class="header-content">
+        <h1>Painel de Voluntários</h1>
+        <div class="header-actions">
+          <span id="total-voluntarios">0 voluntários</span>
+          <button id="btn-logout" class="btn btn-secondary">Sair</button>
+        </div>
+      </div>
+    </header>
+    <div class="admin-layout">
+      <aside class="lista-panel">
+        <div class="lista-header">
+          <h2>Lista de Voluntários</h2>
+          <input type="text" id="busca" placeholder="Buscar por nome..." class="busca-input">
+        </div>
+        <div id="lista-voluntarios" class="lista-voluntarios"></div>
+      </aside>
+      <main class="mapa-panel">
+        <div id="mapa"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ========== Configuração ==========
+    const STORAGE_KEY = 'voluntarios_nucleos';
+    const SENHA_ADMIN = 'gestao2026'; // ← Altere esta senha se quiser
+
+    // ========== Storage ==========
+    function getVoluntarios() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+    function saveVoluntarios(lista) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+    }
+    function adicionarVoluntario(voluntario) {
+      const lista = getVoluntarios();
+      lista.push(voluntario);
+      saveVoluntarios(lista);
+      return lista;
+    }
+
+    // ========== Máscara WhatsApp ==========
+    function aplicarMascaraWhatsApp(input) {
+      input.addEventListener('input', (e) => {
+        let valor = e.target.value.replace(/\D/g, '');
+        if (valor.length > 11) valor = valor.slice(0, 11);
+        if (valor.length > 0) valor = '(' + valor;
+        if (valor.length > 3) valor = valor.slice(0, 3) + ') ' + valor.slice(3);
+        if (valor.length > 10) valor = valor.slice(0, 10) + '-' + valor.slice(10);
+        e.target.value = valor;
+      });
+    }
+
+    // ========== Geocoding (OpenStreetMap - gratuito) ==========
+    async function geocodificar(endereco) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endereco)}&countrycodes=br&limit=1`;
+      const response = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+      if (!response.ok) throw new Error('Erro ao consultar o serviço de localização');
+      const data = await response.json();
+      if (!data || data.length === 0) throw new Error('Endereço não encontrado. Verifique e tente novamente.');
+      return {
+        lat: parseFloat(data[0].lat),
+        lng: parseFloat(data[0].lon),
+        enderecoFormatado: data[0].display_name
+      };
+    }
+
+    // ========== Navegação entre telas ==========
+    const telaForm = document.getElementById('tela-formulario');
+    const telaLogin = document.getElementById('tela-login');
+    const telaPainel = document.getElementById('tela-painel');
+
+    function mostrarTela(tela) {
+      telaForm.classList.add('hidden');
+      telaLogin.classList.add('hidden');
+      telaPainel.classList.add('hidden');
+      tela.classList.remove('hidden');
+    }
+
+    document.getElementById('link-gestao').addEventListener('click', () => {
+      if (sessionStorage.getItem('admin_logado') === 'true') {
+        mostrarTela(telaPainel);
+        inicializarMapa();
+        renderizarLista();
+      } else {
+        mostrarTela(telaLogin);
+      }
+    });
+
+    document.getElementById('link-voltar-form').addEventListener('click', () => {
+      mostrarTela(telaForm);
+    });
+
+    // ========== Formulário de Cadastro ==========
+    const form = document.getElementById('form-voluntario');
+    const inputWhatsapp = document.getElementById('whatsapp');
+    const btnEnviar = document.getElementById('btn-enviar');
+    const mensagemEl = document.getElementById('mensagem');
+
+    aplicarMascaraWhatsApp(inputWhatsapp);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value.trim();
+      const whatsapp = document.getElementById('whatsapp').value.trim();
+      const endereco = document.getElementById('endereco').value.trim();
+
+      if (!nome || !whatsapp || !endereco) {
+        mostrarMensagem('Preencha todos os campos.', 'erro');
+        return;
+      }
+
+      const apenasNumeros = whatsapp.replace(/\D/g, '');
+      if (apenasNumeros.length < 10 || apenasNumeros.length > 11) {
+        mostrarMensagem('WhatsApp inválido. Use o formato (11) 99999-9999', 'erro');
+        return;
+      }
+
+      const lista = getVoluntarios();
+      if (lista.some(v => v.whatsapp.replace(/\D/g, '') === apenasNumeros)) {
+        mostrarMensagem('Este WhatsApp já está cadastrado.', 'erro');
+        return;
+      }
+
+      btnEnviar.disabled = true;
+      btnEnviar.textContent = 'Localizando endereço...';
+
+      try {
+        const geo = await geocodificar(endereco);
+        const voluntario = {
+          id: Date.now().toString(),
+          nome,
+          whatsapp,
+          endereco: geo.enderecoFormatado || endereco,
+          lat: geo.lat,
+          lng: geo.lng,
+          dataCadastro: new Date().toISOString()
+        };
+        adicionarVoluntario(voluntario);
+        form.reset();
+        mostrarMensagem('Cadastro realizado com sucesso! Obrigado por se voluntariar.', 'sucesso');
+      } catch (err) {
+        mostrarMensagem(err.message || 'Erro ao processar o cadastro. Tente novamente.', 'erro');
+      } finally {
+        btnEnviar.disabled = false;
+        btnEnviar.textContent = 'Enviar cadastro';
+      }
+    });
+
+    function mostrarMensagem(texto, tipo) {
+      mensagemEl.textContent = texto;
+      mensagemEl.className = `mensagem ${tipo}`;
+      mensagemEl.classList.remove('hidden');
+    }
+
+    // ========== Login ==========
+    document.getElementById('form-login').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const senha = document.getElementById('senha').value;
+      const loginErro = document.getElementById('login-erro');
+
+      if (senha === SENHA_ADMIN) {
+        sessionStorage.setItem('admin_logado', 'true');
+        mostrarTela(telaPainel);
+        inicializarMapa();
+        renderizarLista();
+      } else {
+        loginErro.textContent = 'Senha incorreta.';
+        loginErro.classList.remove('hidden');
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      sessionStorage.removeItem('admin_logado');
+      mostrarTela(telaForm);
+    });
+
+    // ========== Mapa e Lista ==========
+    let mapa = null;
+    let markerGroup = null;
+    let markers = [];
+
+    function inicializarMapa() {
+      if (mapa) {
+        setTimeout(() => mapa.invalidateSize(), 100);
+        return;
+      }
+      mapa = L.map('mapa').setView([-15.78, -47.93], 4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(mapa);
+      markerGroup = L.layerGroup().addTo(mapa);
+      setTimeout(() => mapa.invalidateSize(), 200);
+    }
+
+    function escaparHTML(texto) {
+      const div = document.createElement('div');
+      div.textContent = texto;
+      return div.innerHTML;
+    }
+
+    function renderizarLista(filtro = '') {
+      const lista = getVoluntarios();
+      const container = document.getElementById('lista-voluntarios');
+      const totalEl = document.getElementById('total-voluntarios');
+
+      const filtrados = filtro
+        ? lista.filter(v => v.nome.toLowerCase().includes(filtro.toLowerCase()))
+        : lista;
+
+      totalEl.textContent = `${lista.length} voluntário${lista.length !== 1 ? 's' : ''}`;
+
+      if (markerGroup) markerGroup.clearLayers();
+      markers = [];
+
+      if (filtrados.length === 0) {
+        container.innerHTML = `<div class="lista-vazia">${lista.length === 0 ? 'Nenhum voluntário cadastrado ainda.' : 'Nenhum resultado encontrado.'}</div>`;
+        return;
+      }
+
+      filtrados.sort((a, b) => new Date(b.dataCadastro) - new Date(a.dataCadastro));
+
+      container.innerHTML = filtrados.map(v => {
+        const data = new Date(v.dataCadastro).toLocaleDateString('pt-BR');
+        const numeroLimpo = v.whatsapp.replace(/\D/g, '');
+        return `
+          <div class="voluntario-item" data-id="${v.id}">
+            <div class="voluntario-nome">${escaparHTML(v.nome)}</div>
+            <div class="voluntario-info">${escaparHTML(v.whatsapp)}</div>
+            <div class="voluntario-info">${escaparHTML(v.endereco)}</div>
+            <div class="voluntario-info">Cadastrado em: ${data}</div>
+            <div class="voluntario-acoes">
+              <a href="https://wa.me/55${numeroLimpo}" target="_blank" class="btn-whatsapp" onclick="event.stopPropagation()">WhatsApp</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const bounds = [];
+      filtrados.forEach(v => {
+        if (v.lat && v.lng) {
+          const marker = L.marker([v.lat, v.lng]).bindPopup(
+            '<strong>' + escaparHTML(v.nome) + '</strong><br>' +
+            escaparHTML(v.whatsapp) + '<br>' +
+            '<a href="https://wa.me/55' + v.whatsapp.replace(/\D/g, '') + '" target="_blank">Abrir WhatsApp</a>'
+          );
+          markerGroup.addLayer(marker);
+          markers.push(marker);
+          bounds.push([v.lat, v.lng]);
+        }
+      });
+
+      if (bounds.length > 0 && mapa) {
+        mapa.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      }
+
+      container.querySelectorAll('.voluntario-item').forEach(item => {
+        item.addEventListener('click', () => {
+          container.querySelectorAll('.voluntario-item').forEach(i => i.classList.remove('ativo'));
+          item.classList.add('ativo');
+          const id = item.dataset.id;
+          const voluntario = filtrados.find(v => v.id === id);
+          if (voluntario && voluntario.lat && voluntario.lng && mapa) {
+            mapa.setView([voluntario.lat, voluntario.lng], 15);
+            markers.forEach(m => {
+              const latlng = m.getLatLng();
+              if (Math.abs(latlng.lat - voluntario.lat) < 0.0001 && Math.abs(latlng.lng - voluntario.lng) < 0.0001) {
+                m.openPopup();
+              }
+            });
+          }
+        });
+      });
+    }
+
+    document.getElementById('busca').addEventListener('input', (e) => {
+      renderizarLista(e.target.value);
+    });
+  </script>
 </body>
 </html>
